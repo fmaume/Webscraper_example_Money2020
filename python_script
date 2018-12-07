@@ -1,0 +1,67 @@
+#open the web browser
+import time    
+from selenium import webdriver
+chrome_options = webdriver.ChromeOptions()
+driver = webdriver.Chrome(chrome_options=chrome_options)
+driver.maximize_window()
+driver.get('https://us.money2020.com/startup-academy')
+time.sleep(1)
+
+#%%
+#startup academy
+
+#Get link to all the startup profils
+driver.get('https://us.money2020.com/startup-academy')
+target_list = driver.find_elements_by_class_name('companies-list-dynamic-block')
+target_list = [x.find_element_by_tag_name('a') for x in target_list]
+target_list = [x.get_attribute('href') for x in target_list]
+target_list = [str(x) for x in target_list]
+
+#visit all startup profil to get extra information
+webstie = list()
+description = list()
+
+for url in target_list:
+    driver.get(url)
+    try:
+        stemp = driver.find_element_by_css_selector(".company-detail-link")
+        stemp = stemp.get_attribute('href')
+    except:
+        stemp = "unknow"
+    webstie.append(stemp)
+    try:
+        stemp = driver.find_element_by_css_selector(".company-detail-column-2")
+        stemp = stemp.get_attribute('href')
+    except:
+        stemp = "unknow"
+    description.append(stemp)   
+
+#%%
+#look for specific keyword in the startup description
+def search_keyword(keyword, content_list):
+    result = list()
+    for lines in content_list:
+        try:
+            lines = lines.lower()
+            lines.index(keyword)
+            stemp = True
+        except:
+            stemp = False
+        result.append(stemp)
+    return result
+
+
+blockchain =  search_keyword("blockchain", description)
+fintech =  search_keyword("fintech", description)
+smart_contract =  search_keyword("smart contract", description)
+
+#%%
+#export the result
+import pandas as pd
+export = pd.DataFrame({"webstie": webstie, "description": description, "blockchain" : blockchain,"fintech" : fintech,  "smart_contract": smart_contract})
+
+
+out_path = "G:\\Dropbox\\money2020_startup_academy.xlsx"
+writer = pd.ExcelWriter(out_path, engine='xlsxwriter')            
+export.to_excel(writer,   header=True, index=False ) 
+writer.close()  
